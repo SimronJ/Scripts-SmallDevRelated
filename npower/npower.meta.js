@@ -9,4 +9,4 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @connect      api.openai.com
-// @downloadURL  https://raw.githubusercontent.com/yourusername/my-awesome-repo/main/scripts/npoweronline-qa-extractor.user.js
+// @downloadURL  https://github.com/SimronJ/tempermonkeyScripts/raw/refs/heads/main/npower/npower.user.js

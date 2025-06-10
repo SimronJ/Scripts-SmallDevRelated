@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         NPoweronline Question and Answers Extractor with OpenAI Support
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  Extract Q&A and get responses from OpenAI
 // @match        https://nii.npoweronline.org/*
 // @grant        GM_setClipboard
@@ -11,6 +11,8 @@
 // @connect      api.openai.com
 // @run-at       document-idle
 // @author       @SimronJ
+// @updateURL    https://github.com/SimronJ/tempermonkeyScripts/raw/refs/heads/main/npower/npower.meta.js
+// @downloadURL  https://github.com/SimronJ/tempermonkeyScripts/raw/refs/heads/main/npower/npower.user.js
 // ==/UserScript==
 
 (function() {
