@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OP.GG Total & Average Game Time Calculator (Robust Selector)
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      0.8
 // @description  Calculates and displays total time, average time, and the most frequent champion played on OP.GG match history.
 // @author       SimronJ
 // @match        https://*.op.gg/lol/summoners*
@@ -142,7 +142,68 @@
             `Average per Game:  ${avgStr} (${gamesWithTimeCount} games)\n` +
             `Most Played Champion: ${mostFrequentChampion} (${mostFrequentChampionGames} games | ${mostPlayedChampionLaningScore} Avg Lane)\n` +
             `Average Laning Score: ${averageLaningScore}`;
+
+        // Add scroll button if it doesn't exist
+        let scrollButton = document.getElementById('auto-scroll-button');
+        if (!scrollButton) {
+            scrollButton = document.createElement('button');
+            scrollButton.id = 'auto-scroll-button';
+            scrollButton.textContent = 'Auto Scroll';
+            Object.assign(scrollButton.style, {
+                display: 'block',
+                marginTop: '10px',
+                padding: '5px 10px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                width: '100%'
+            });
+            scrollButton.addEventListener('click', autoScroll);
+            el.appendChild(scrollButton);
+        }
     }
+
+    // Function to handle auto-scrolling
+    function autoScroll() {
+        const button = document.getElementById('auto-scroll-button');
+        button.textContent = 'Loading...';
+        button.disabled = true;
+        
+        let lastHeight = document.body.scrollHeight;
+        let noChangeCount = 0;
+        
+        const loadMore = () => {
+            const showMoreButton = document.querySelector('button.text-13px.border-1.box-border.block.h-\\[40px\\].w-full.border.border-gray-250.bg-gray-0.px-0.py-\\[8px\\].text-center.text-gray-900.no-underline.md\\:rounded');
+            
+            if (showMoreButton) {
+                showMoreButton.click();
+                // Check if the page height changed after clicking
+                setTimeout(() => {
+                    const newHeight = document.body.scrollHeight;
+                    if (newHeight === lastHeight) {
+                        noChangeCount++;
+                        if (noChangeCount >= 3) { // If height hasn't changed for 3 attempts
+                            clearInterval(loadInterval);
+                            button.textContent = 'Auto Scroll';
+                            button.disabled = false;
+                        }
+                    } else {
+                        noChangeCount = 0;
+                        lastHeight = newHeight;
+                    }
+                }, 1000);
+            } else {
+                clearInterval(loadInterval);
+                button.textContent = 'Auto Scroll';
+                button.disabled = false;
+            }
+        };
+
+        const loadInterval = setInterval(loadMore, 1500); // Try to load more every 1.5 seconds
+    }
+
     // Watch for newly loaded games (infinite scroll)
     const observer = new MutationObserver(muts => {
         for (let m of muts) {
