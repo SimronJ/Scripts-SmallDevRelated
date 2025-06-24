@@ -2,12 +2,13 @@
 // @name         OP.GG Total & Average Game Time Calculator (Robust Selector)
 // @namespace    http://tampermonkey.net/
 // @version      0.8
-// @description  Calculates and displays total time, average time, and the most frequent champion played on OP.GG match history.
+// @description  Enhance your OP.GG experience with this powerful match history analyzer! Automatically calculates your total playtime, average game duration, and most played champions. Features include: 🕒 Total and average game time tracking, 🏆 Most played champion statistics, 📊 Average laning scores, and 🔄 Auto-scroll functionality to load your entire match history. Perfect for players who want to track their gaming habits and performance over time!
 // @author       SimronJ
 // @match        https://*.op.gg/lol/summoners*
 // @grant        none
 // @updateURL    https://github.com/SimronJ/tempermonkeyScripts/raw/refs/heads/main/opgg/opgg.meta.js
 // @downloadURL  https://github.com/SimronJ/tempermonkeyScripts/raw/refs/heads/main/opgg/opgg.user.js
+// @license      MIT
 // ==/UserScript==
 (function() {
     'use strict';

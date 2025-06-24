@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         NPoweronline Question and Answers Extractor with OpenAI Support
 // @namespace    http://tampermonkey.net/
-// @version      4.1
+// @version      4.2
 // @description  Extract Q&A and get responses from OpenAI
-// @match        https://nii.npoweronline.org/*
+// @match        https://www.npowerniionline.org/*
 // @grant        GM_setClipboard
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
