@@ -1,0 +1,31 @@
+{
+  "name": "opgg-stats-card-extension",
+  "version": "1.2.0",
+  "description": "Chrome extension that adds a draggable, collapsible stats card to OP.GG summoner pages",
+  "main": "content.js",
+  "scripts": {
+    "build": "echo 'Extension built successfully'",
+    "package": "powershell Compress-Archive -Path . -DestinationPath ../opgg-stats-card-extension.zip -Force",
+    "test": "echo 'Test the extension by loading it in Chrome'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "opgg",
+    "league-of-legends",
+    "stats",
+    "analytics",
+    "gaming"
+  ],
+  "author": "SimronJ",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SimronJ/tempermonkeyScripts"
+  },
+  "bugs": {
+    "url": "https://github.com/SimronJ/tempermonkeyScripts/issues"
+  },
+  "homepage": "https://github.com/SimronJ/tempermonkeyScripts#readme",
+  "devDependencies": {},
+  "dependencies": {}
+} 

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OP.GG Stats Card - Icon Resizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .icon-preview {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+            vertical-align: top;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .warning {
+            background: #fff3e0;
+            color: #ef6c00;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .file-input {
+            margin: 20px 0;
+        }
+        .download-all {
+            background: #2196F3;
+        }
+        .download-all:hover {
+            background: #1976D2;
+        }
+        .download-individual {
+            background: #ff9800;
+            font-size: 12px;
+            padding: 5px 10px;
+            margin-top: 5px;
+        }
+        .download-individual:hover {
+            background: #f57c00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 OP.GG Stats Card - Icon Resizer</h1>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Click "Choose File" and select your <code>opggSightIcon.png</code></li>
+                <li>Click "Generate All Sizes" to create the required icon sizes</li>
+                <li>Use "Download All (ZIP)" or download individual icons</li>
+                <li>Save the icons to the <code>icons/</code> folder with these exact names: <code>icon16.png</code>, <code>icon32.png</code>, <code>icon48.png</code>, <code>icon128.png</code></li>
+            </ol>
+        </div>
+
+        <div class="file-input">
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            <button onclick="document.getElementById('imageInput').click()">Choose Icon File</button>
+            <span id="fileName" style="margin-left: 10px; color: #666;"></span>
+        </div>
+
+        <button onclick="generateAllSizes()" id="generateBtn" disabled>Generate All Sizes</button>
+        <button onclick="downloadAllIcons()" id="downloadBtn" disabled class="download-all">Download All (ZIP)</button>
+
+        <div id="iconContainer"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        let originalImage = null;
+        let generatedCanvases = {};
+        const requiredSizes = [16, 32, 48, 128];
+
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        originalImage = img;
+                        document.getElementById('generateBtn').disabled = false;
+                        showMessage('Image loaded successfully! Click "Generate All Sizes" to create the icons.', 'success');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function generateAllSizes() {
+            if (!originalImage) {
+                showMessage('Please select an image file first.', 'error');
+                return;
+            }
+
+            const container = document.getElementById('iconContainer');
+            container.innerHTML = '';
+
+            requiredSizes.forEach(size => {
+                const canvas = resizeImage(originalImage, size, size);
+                generatedCanvases[size] = canvas;
+                
+                const div = document.createElement('div');
+                div.className = 'icon-preview';
+                
+                const label = document.createElement('div');
+                label.textContent = `${size}x${size} (icon${size}.png)`;
+                label.style.marginTop = '5px';
+                label.style.fontWeight = 'bold';
+                label.style.fontSize = '12px';
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = `Download ${size}x${size}`;
+                downloadBtn.className = 'download-individual';
+                downloadBtn.onclick = () => downloadIndividualIcon(size);
+                
+                div.appendChild(canvas);
+                div.appendChild(label);
+                div.appendChild(downloadBtn);
+                container.appendChild(div);
+            });
+
+            document.getElementById('downloadBtn').disabled = false;
+            showMessage('All icon sizes generated! You can now download them individually or as a ZIP file.', 'success');
+        }
+
+        function resizeImage(img, width, height) {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            // Enable image smoothing for better quality
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // Draw the resized image
+            ctx.drawImage(img, 0, 0, width, height);
+
+            return canvas;
+        }
+
+        function downloadIndividualIcon(size) {
+            const canvas = generatedCanvases[size];
+            if (!canvas) {
+                showMessage(`Icon ${size}x${size} not found. Please generate icons first.`, 'error');
+                return;
+            }
+
+            try {
+                canvas.toBlob(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `icon${size}.png`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                }, 'image/png');
+            } catch (error) {
+                showMessage(`Error downloading ${size}x${size} icon: ${error.message}`, 'error');
+            }
+        }
+
+        function downloadAllIcons() {
+            if (!originalImage) {
+                showMessage('Please generate icons first.', 'error');
+                return;
+            }
+
+            const zip = new JSZip();
+            let processedCount = 0;
+            const totalCount = requiredSizes.length;
+
+            requiredSizes.forEach(size => {
+                const canvas = generatedCanvases[size];
+                if (!canvas) {
+                    showMessage(`Icon ${size}x${size} not found. Please generate icons first.`, 'error');
+                    return;
+                }
+
+                try {
+                    canvas.toBlob(blob => {
+                        zip.file(`icon${size}.png`, blob);
+                        processedCount++;
+                        
+                        if (processedCount === totalCount) {
+                            // All icons processed, create ZIP
+                            zip.generateAsync({type: 'blob'}).then(content => {
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(content);
+                                link.download = 'opgg-stats-card-icons.zip';
+                                link.click();
+                                URL.revokeObjectURL(link.href);
+                                showMessage('ZIP file downloaded successfully! Extract the icons to your icons/ folder.', 'success');
+                            }).catch(error => {
+                                showMessage(`Error creating ZIP file: ${error.message}`, 'error');
+                            });
+                        }
+                    }, 'image/png');
+                } catch (error) {
+                    showMessage(`Error processing ${size}x${size} icon: ${error.message}`, 'error');
+                    processedCount++;
+                    
+                    if (processedCount === totalCount) {
+                        showMessage('Some icons failed to process. Try downloading them individually.', 'warning');
+                    }
+                }
+            });
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            messageDiv.style.marginBottom = '20px';
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(messageDiv, container.firstChild);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Try to load the existing opggSightIcon.png if it exists
+        window.onload = function() {
+            const img = new Image();
+            img.crossOrigin = 'anonymous'; // Try to handle CORS
+            
+            img.onload = function() {
+                originalImage = img;
+                document.getElementById('fileName').textContent = 'opggSightIcon.png (auto-loaded)';
+                document.getElementById('generateBtn').disabled = false;
+                showMessage('Found opggSightIcon.png! Click "Generate All Sizes" to create the icons.', 'success');
+            };
+            
+            img.onerror = function() {
+                showMessage('No opggSightIcon.png found or CORS blocked access. Please select your icon file manually.', 'warning');
+            };
+            
+            img.src = 'opggSightIcon.png';
+        };
+    </script>
+</body>
+</html> 
