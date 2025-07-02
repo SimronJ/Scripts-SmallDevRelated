@@ -1,17 +1,34 @@
 # OP.GG Stats Card Chrome Extension
 
-A Chrome extension that adds a draggable, collapsible stats card to OP.GG summoner pages with toggleable auto-scroll. Tracks playtime, games, laning win rate, and more.
+Adds a draggable stats card to OP.GG summoner pages with:
+- Playtime tracking
+- Laning win rate
+- Lifetime spend (API fetch)
+- Auto-scroll to load more games
+- Share (screenshot) button
+- Modern, compact UI
+- Long names are truncated and can be expanded on click
+
+## Usage
+1. Install the extension in Chrome.
+2. Visit an OP.GG summoner page.
+3. The stats card appears on the page. Drag it, collapse it, or use the buttons as needed.
+4. Click "View Lifetime Spend" to fetch your total playtime.
+5. Use auto-scroll to load more games and improve stats.
+6. Click the camera icon to copy a screenshot of the card.
+7. Click on a long summoner name to expand and view the full name.
 
 ## Features
+- Draggable and collapsible stats card
+- Playtime, games, laning win rate, and top champion stats
+- Fetch and display lifetime spend via API
+- Auto-scroll to load more games
+- Share (screenshot) button
+- Modern, compact, and responsive UI
+- Handles long summoner names with truncation and expand-on-click
 
-- 📈 **Total Playtime & Games**: Automatically calculates total time spent and number of games
-- 🏆 **Champion Statistics**: Shows your most played champion with detailed stats
-- ⚔️ **Laning Analysis**: Tracks laning win rate for overall and per-champion performance
-- 🥇 **Ranking Performance**: Displays average ranking across all games
-- 🔄 **Auto-Scroll**: Automatically loads more games to get complete statistics
-- 📱 **Draggable Interface**: Move the stats card anywhere on the screen
-- 🔽 **Collapsible**: Minimize the card when not needed
-- 💾 **Persistent Settings**: Your preferences are saved across browser sessions
+---
+For more details, see the code or open an issue.
 
 ## Installation
 
@@ -21,19 +38,11 @@ A Chrome extension that adds a draggable, collapsible stats card to OP.GG summon
 3. Confirm the installation
 
 ### Method 2: Manual Installation (Developer Mode)
-1. Download or clone this repository
+1. Download the extension files
 2. Open Chrome and go to `chrome://extensions/`
 3. Enable "Developer mode" in the top right
 4. Click "Load unpacked" and select the `opgg-chrome-extension` folder
 5. The extension will now be installed and active
-
-## Usage
-
-1. Visit any OP.GG summoner page (e.g., `https://www.op.gg/summoners/na/username`)
-2. The stats card will automatically appear on the page
-3. Drag the card header to move it around
-4. Click the `−` button to collapse/expand the card
-5. Use the "Auto Scroll" button to automatically load more games for complete statistics
 
 ## How It Works
 
@@ -125,7 +134,7 @@ This extension:
 
 ## Contributing
 
-Feel free to submit issues and enhancement requests!
+Feel free to submit feedback and enhancement requests!
 
 ## License
 

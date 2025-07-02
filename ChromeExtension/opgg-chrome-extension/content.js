@@ -226,6 +226,79 @@
         });
     }
 
+    // --- Lifetime Spend Fetch Logic ---
+    let lifetimeSpendData = null;
+    let lifetimeSpendLoading = false;
+    let lifetimeSpendError = null;
+
+    function extractSummonerInfo() {
+        // Find the h1 > div > span structure
+        const h1 = document.querySelector('h1 > div.flex.items-center.gap-1.truncate');
+        if (!h1) return null;
+        const spans = h1.querySelectorAll('span');
+        if (spans.length < 2) return null;
+        const gameName = spans[0].textContent.trim();
+        let tagLine = spans[1].textContent.trim();
+        if (tagLine.startsWith('#')) tagLine = tagLine.slice(1);
+        return { gameName, tagLine };
+    }
+
+    function formatUnixToDate(unix) {
+        const d = new Date(unix * 1000);
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${mm}-${dd}-${yyyy}`;
+    }
+
+    function fetchLifetimeSpend(buttonEl, updateCardCallback) {
+        const info = extractSummonerInfo();
+        if (!info) {
+            lifetimeSpendError = 'Summoner not found';
+            updateCardCallback();
+            return;
+        }
+        lifetimeSpendLoading = true;
+        lifetimeSpendError = null;
+        updateCardCallback();
+        buttonEl.disabled = true;
+        buttonEl.textContent = 'Loading...';
+        // Default to NA1, could be improved
+        const region = 'na1';
+        const apiPayload = {
+            gameName: info.gameName,
+            tagLine: info.tagLine,
+            region: region
+        };
+        chrome.runtime.sendMessage({
+            type: 'FETCH_LIFETIME_SPEND',
+            payload: apiPayload
+        }, (response) => {
+            if (!response) {
+                lifetimeSpendError = 'No response from background';
+                lifetimeSpendData = null;
+                // Log the API call payload for debugging
+                console.log('[OPGG Stats] Lifetime Spend API call payload:', apiPayload);
+            } else if (!response.success || !response.data || response.data.error || !response.data.response) {
+                lifetimeSpendError = 'Not found';
+                lifetimeSpendData = null;
+                // Log the API call payload for debugging
+                console.log('[OPGG Stats] Lifetime Spend API call payload:', apiPayload);
+            } else {
+                const { totalTimeSpent, updatedAt } = response.data.response;
+                // totalTimeSpent is in minutes, convert to hours
+                const hours = Math.floor(totalTimeSpent / 60);
+                const lastUpdate = formatUnixToDate(updatedAt);
+                lifetimeSpendData = { hours, lastUpdate };
+                lifetimeSpendError = null;
+            }
+            lifetimeSpendLoading = false;
+            updateCardCallback();
+            buttonEl.disabled = false;
+            buttonEl.textContent = 'Check the Lifetime Playtime';
+        });
+    }
+
     function updateDisplay(force) {
         // Remove old card if exists
         let el = document.getElementById('time-stats-display');
@@ -261,11 +334,231 @@
             userSelect:     'none',
         });
 
+        // --- Card header (summoner name + share button, inside card) ---
+        let summonerName = '';
+        let summonerTag = '';
+        const summonerInfo = extractSummonerInfo();
+        if (summonerInfo && summonerInfo.gameName) {
+            summonerName = summonerInfo.gameName;
+            if (summonerInfo.tagLine) {
+                summonerTag = summonerInfo.tagLine;
+            }
+        }
+        // Top row: Summoner name (center) + Share button (right), inside card
+        const topRow = document.createElement('div');
+        topRow.style.display = 'flex';
+        topRow.style.alignItems = 'center';
+        topRow.style.justifyContent = 'space-between';
+        topRow.style.padding = '18px 12px 0 12px';
+        topRow.style.marginBottom = '10px';
+        // Summoner name (bold, white, modern font)
+        const nameDiv = document.createElement('div');
+        nameDiv.style.flex = '1 1 0';
+        nameDiv.style.textAlign = 'left';
+        nameDiv.style.display = 'flex';
+        nameDiv.style.alignItems = 'baseline';
+        nameDiv.style.overflow = 'hidden';
+        nameDiv.style.whiteSpace = 'nowrap';
+        nameDiv.style.textOverflow = 'ellipsis';
+        nameDiv.style.maxWidth = '140px'; // Prevents overflow, adjust as needed
+        nameDiv.style.cursor = 'pointer';
+        nameDiv.title = summonerTag ? `${summonerName} #${summonerTag}` : summonerName;
+        let nameExpanded = false;
+        // Name span
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = summonerName;
+        nameSpan.style.fontWeight = 'bold';
+        nameSpan.style.fontSize = '22px';
+        nameSpan.style.color = '#fff';
+        nameSpan.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
+        nameSpan.style.letterSpacing = '0.5px';
+        nameSpan.style.overflow = 'hidden';
+        nameSpan.style.whiteSpace = 'nowrap';
+        nameSpan.style.textOverflow = 'ellipsis';
+        // Tag span
+        const tagSpan = document.createElement('span');
+        if (summonerTag) {
+            tagSpan.textContent = ' #' + summonerTag;
+            tagSpan.style.fontWeight = '400';
+            tagSpan.style.fontSize = '16px';
+            tagSpan.style.color = '#fff';
+            tagSpan.style.fontFamily = 'monospace, Menlo, Consolas, "Liberation Mono", "Courier New", monospace';
+            tagSpan.style.marginLeft = '6px';
+            tagSpan.style.opacity = '0.85';
+            tagSpan.style.overflow = 'hidden';
+            tagSpan.style.whiteSpace = 'nowrap';
+            tagSpan.style.textOverflow = 'ellipsis';
+        }
+        nameDiv.appendChild(nameSpan);
+        if (summonerTag) nameDiv.appendChild(tagSpan);
+        // Toggle expand/collapse on click
+        nameDiv.addEventListener('click', function(e) {
+            e.stopPropagation();
+            nameExpanded = !nameExpanded;
+            if (nameExpanded) {
+                nameDiv.style.maxWidth = 'none';
+                nameDiv.style.overflow = 'visible';
+                nameDiv.style.whiteSpace = 'normal';
+                nameSpan.style.overflow = 'visible';
+                nameSpan.style.whiteSpace = 'normal';
+                nameSpan.style.textOverflow = 'clip';
+                if (summonerTag) {
+                    tagSpan.style.overflow = 'visible';
+                    tagSpan.style.whiteSpace = 'normal';
+                    tagSpan.style.textOverflow = 'clip';
+                }
+                // Expand the card width to fit content
+                const card = document.getElementById('time-stats-display');
+                if (card) card.style.maxWidth = 'none';
+            } else {
+                nameDiv.style.maxWidth = '140px';
+                nameDiv.style.overflow = 'hidden';
+                nameDiv.style.whiteSpace = 'nowrap';
+                nameSpan.style.overflow = 'hidden';
+                nameSpan.style.whiteSpace = 'nowrap';
+                nameSpan.style.textOverflow = 'ellipsis';
+                if (summonerTag) {
+                    tagSpan.style.overflow = 'hidden';
+                    tagSpan.style.whiteSpace = 'nowrap';
+                    tagSpan.style.textOverflow = 'ellipsis';
+                }
+                // Restore card max width
+                const card = document.getElementById('time-stats-display');
+                if (card) card.style.maxWidth = '240px';
+            }
+        });
+        topRow.appendChild(nameDiv);
+        // Share button (right, styled as icon)
+        const shareBtn = document.createElement('button');
+        shareBtn.innerHTML = '📸';
+        shareBtn.title = 'Share this card';
+        shareBtn.style.background = 'none';
+        shareBtn.style.border = 'none';
+        shareBtn.style.fontSize = '22px';
+        shareBtn.style.cursor = 'pointer';
+        shareBtn.style.marginLeft = '8px';
+        shareBtn.style.padding = '2px 6px';
+        shareBtn.style.borderRadius = '6px';
+        shareBtn.style.transition = 'background 0.2s';
+        shareBtn.disabled = false;
+        shareBtn.style.opacity = '1';
+        shareBtn.onmouseover = function() { shareBtn.style.background = '#263040'; };
+        shareBtn.onmouseout = function() { shareBtn.style.background = 'none'; };
+        shareBtn.onclick = async function(e) {
+            e.stopPropagation();
+            shareBtn.disabled = true;
+            shareBtn.style.opacity = '0.6';
+            setTimeout(async () => {
+                const card = document.getElementById('time-stats-display');
+                console.log('Card size:', card ? card.offsetWidth : 'null', card ? card.offsetHeight : 'null');
+                if (!card || card.offsetWidth === 0 || card.offsetHeight === 0) {
+                    showScreenshotError('Screenshot failed: Card is not visible or has zero size.');
+                    shareBtn.disabled = false;
+                    shareBtn.style.opacity = '1';
+                    return;
+                }
+                // Get card position relative to viewport
+                const rect = card.getBoundingClientRect();
+                // Ask background to capture the visible tab
+                chrome.runtime.sendMessage({ type: 'CAPTURE_CARD_SCREENSHOT' }, async (dataUrl) => {
+                    if (!dataUrl) {
+                        showScreenshotError('Failed to capture screenshot.');
+                        shareBtn.disabled = false;
+                        shareBtn.style.opacity = '1';
+                        return;
+                    }
+                    // Create an image and crop to the card
+                    const img = new window.Image();
+                    img.onload = async function() {
+                        const dpr = window.devicePixelRatio;
+                        const canvas = document.createElement('canvas');
+                        canvas.width = rect.width;
+                        canvas.height = rect.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(
+                            img,
+                            rect.left * dpr, rect.top * dpr, rect.width * dpr, rect.height * dpr, // source
+                            0, 0, rect.width, rect.height // destination
+                        );
+                        // Copy to clipboard
+                        canvas.toBlob(async blob => {
+                            if (navigator.clipboard && window.ClipboardItem) {
+                                await navigator.clipboard.write([
+                                    new window.ClipboardItem({ 'image/png': blob })
+                                ]);
+                                showCopyConfirm();
+                            } else {
+                                showScreenshotError('Clipboard API not supported.');
+                            }
+                        }, 'image/png');
+                    };
+                    img.src = dataUrl;
+                });
+                shareBtn.disabled = false;
+                shareBtn.style.opacity = '1';
+            }, 700); // 700ms delay
+        };
+        topRow.appendChild(shareBtn);
+        el.appendChild(topRow);
+        // Divider below top row
+        const divider = document.createElement('div');
+        divider.style.height = '1px';
+        divider.style.background = 'linear-gradient(90deg, #263040 0%, #4FC3F7 100%)';
+        divider.style.margin = '10px 0 8px 0';
+        el.appendChild(divider);
+
+        // --- Lifetime Spend Section ---
+        const lifetimeDiv = document.createElement('div');
+        lifetimeDiv.style.padding = '0 10px 0 10px';
+        lifetimeDiv.style.background = 'none';
+        lifetimeDiv.style.marginBottom = '18px';
+        lifetimeDiv.style.textAlign = 'center';
+        // Button or Data
+        if (lifetimeSpendData) {
+            const days = Math.floor(lifetimeSpendData.hours / 24);
+            lifetimeDiv.innerHTML = `
+                <div style="font-size: 17px; font-weight: bold; margin-bottom: 8px; text-align: center; color: #4FC3F7;">Lifetime Playtime</div>
+                <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 0px;">
+                    <div style="flex: 1 1 0; min-width: 56px; background: #232f3e; border: 1.5px solid #4FC3F7; border-radius: 12px; padding: 12px 0 10px 0; display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 14px; color: #4FC3F7; margin-bottom: 2px;">Hours</span>
+                        <span style="font-size: 24px; font-weight: bold; color: #fff; letter-spacing: 0.5px;">${lifetimeSpendData.hours.toLocaleString()}</span>
+                    </div>
+                    <div style="flex: 1 1 0; min-width: 56px; background: #232f3e; border: 1.5px solid #4FC3F7; border-radius: 12px; padding: 12px 0 10px 0; display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 14px; color: #4FC3F7; margin-bottom: 2px;">Days</span>
+                        <span style="font-size: 24px; font-weight: bold; color: #fff; letter-spacing: 0.5px;">${days.toLocaleString()}</span>
+                    </div>
+                </div>
+                <div style="font-size: 14px; color: #90a4ae; margin: 10px 0 8px 0; text-align: center;">Last Update: ${lifetimeSpendData.lastUpdate}</div>
+            `;
+        } else if (lifetimeSpendLoading) {
+            lifetimeDiv.textContent = 'Loading...';
+        } else if (lifetimeSpendError) {
+            lifetimeDiv.textContent = "Couldn't get the data at this time.";
+        } else {
+            const btn = document.createElement('button');
+            btn.textContent = 'View Lifetime Playtime';
+            btn.style.background = '#4FC3F7';
+            btn.style.color = '#23272f';
+            btn.style.fontWeight = 'bold';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '6px';
+            btn.style.padding = '8px 0';
+            btn.style.margin = '12px 0 12px 0';
+            btn.style.width = '100%';
+            btn.style.cursor = 'pointer';
+            btn.style.fontSize = '13px';
+            btn.onclick = function() {
+                fetchLifetimeSpend(btn, () => updateDisplay(false));
+            };
+            lifetimeDiv.appendChild(btn);
+        }
+        el.appendChild(lifetimeDiv);
+
         // Card header (draggable + collapse)
         const header = document.createElement('div');
         header.style.cssText = `
             display: flex; align-items: center; justify-content: space-between;
-            background: #263040; border-radius: 12px 12px 0 0; padding: 8px 12px; cursor: move; font-size: 15px; font-weight: 700; color: #4FC3F7; letter-spacing: 0.5px; user-select: none;`;
+            background: #263040; border-radius: 12px 12px 0 0; padding: 8px 12px; font-size: 15px; font-weight: 700; color: #4FC3F7; letter-spacing: 0.5px; user-select: none;`;
         header.innerHTML = `<span>📊 Stats</span><button id="collapse-btn" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;outline:none;">${collapsed ? '+' : '−'}</button>`;
         el.appendChild(header);
 
@@ -324,6 +617,15 @@
                 transition: 'background 0.2s',
             });
             content.appendChild(scrollButton);
+            // Helper text under auto scroll
+            const scrollHelper = document.createElement('div');
+            scrollHelper.textContent = 'Turn on auto scroll to load more games and improve your stats.';
+            scrollHelper.style.fontSize = '12px';
+            scrollHelper.style.color = '#B0BEC5';
+            scrollHelper.style.margin = '6px 0 10px 0';
+            scrollHelper.style.textAlign = 'center';
+            scrollHelper.style.lineHeight = '1.3';
+            content.appendChild(scrollHelper);
         }
         scrollButton.disabled = false;
         scrollButton.textContent = autoScrollActive ? 'Auto Scroll: ON' : 'Auto Scroll: OFF';
@@ -356,10 +658,12 @@
             saveSettings();
         };
 
-        // Drag logic (with Chrome storage)
+        // --- Drag logic (whole card, not just header, but not on buttons/inputs/links) ---
         let isDragging = false, dragOffsetX = 0, dragOffsetY = 0;
-        header.onmousedown = function(e) {
-            if (e.target.id === 'collapse-btn') return; // Don't drag on collapse button
+        el.onmousedown = function(e) {
+            // Only start drag if not clicking on a button, input, textarea, select, or link
+            const tag = e.target.tagName.toLowerCase();
+            if (["button","input","textarea","select","a","label"].includes(tag)) return;
             isDragging = true;
             dragOffsetX = e.clientX - el.getBoundingClientRect().left;
             dragOffsetY = e.clientY - el.getBoundingClientRect().top;
@@ -485,9 +789,55 @@
     setInterval(() => {
         if (location.href !== lastUrl) {
             lastUrl = location.href;
+            // Reset lifetime spend state on SPA navigation
+            lifetimeSpendData = null;
+            lifetimeSpendError = null;
+            lifetimeSpendLoading = false;
             if (observer) observer.disconnect();
             updateDisplay(true);
             observeMainContent();
         }
     }, 300);
+
+    function showScreenshotError(msg) {
+        let errDiv = document.getElementById('opgg-screenshot-error');
+        if (errDiv) errDiv.remove();
+        errDiv = document.createElement('div');
+        errDiv.id = 'opgg-screenshot-error';
+        errDiv.textContent = msg;
+        errDiv.style.background = '#F44336';
+        errDiv.style.color = '#fff';
+        errDiv.style.fontWeight = 'bold';
+        errDiv.style.borderRadius = '6px';
+        errDiv.style.padding = '8px 12px';
+        errDiv.style.margin = '10px auto';
+        errDiv.style.textAlign = 'center';
+        errDiv.style.maxWidth = '90%';
+        errDiv.style.zIndex = '10001';
+        // Insert at the top of the card
+        const card = document.getElementById('time-stats-display');
+        if (card) card.insertBefore(errDiv, card.firstChild);
+        setTimeout(() => { if (errDiv) errDiv.remove(); }, 3500);
+    }
+
+    function showCopyConfirm() {
+        let conf = document.getElementById('opgg-copy-confirm');
+        if (conf) conf.remove();
+        conf = document.createElement('div');
+        conf.id = 'opgg-copy-confirm';
+        conf.textContent = 'Copied to your clipboard!';
+        conf.style.background = '#4FC3F7';
+        conf.style.color = '#23272f';
+        conf.style.fontWeight = 'bold';
+        conf.style.borderRadius = '6px';
+        conf.style.padding = '8px 16px';
+        conf.style.margin = '10px auto';
+        conf.style.textAlign = 'center';
+        conf.style.maxWidth = '90%';
+        conf.style.zIndex = '10001';
+        // Insert at the top of the card
+        const card = document.getElementById('time-stats-display');
+        if (card) card.insertBefore(conf, card.firstChild);
+        setTimeout(() => { if (conf) conf.remove(); }, 2000);
+    }
 })(); 

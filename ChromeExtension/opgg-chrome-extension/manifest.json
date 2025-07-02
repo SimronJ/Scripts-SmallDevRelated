@@ -2,18 +2,22 @@
   "manifest_version": 3,
   "name": "OP.GG Stats Card",
   "version": "1.2.0",
-  "description": "Adds a draggable stats card to OP.GG summoner pages with playtime, games, laning win rate, and auto-scroll features.",
+  "description": "Adds a draggable stats card to OP.GG with playtime, laning win rate, lifetime spend, auto-scroll, and share features. Get deeper insights into your League of Legends stats with a compact, interactive UI.",
   "permissions": [
-    "storage"
+    "scripting",
+    "storage",
+    "tabs",
+    "activeTab"
   ],
   "host_permissions": [
-    "https://*.op.gg/*"
+    "<all_urls>",
+    "https://*.op.gg/*",
+    "https://api.lolvalue.com/*"
   ],
   "content_scripts": [
     {
-      "matches": ["https://*.op.gg/lol*"],
-      "js": ["content.js"],
-      "run_at": "document_end"
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
     }
   ],
   "icons": {
@@ -27,5 +31,8 @@
     "default_title": "OP.GG Stats Card"
   },
   "author": "SimronJ",
-  "homepage_url": "https://github.com/SimronJ/tempermonkeyScripts"
+  "homepage_url": "https://github.com/SimronJ/tempermonkeyScripts",
+  "background": {
+    "service_worker": "background.js"
+  }
 } 

@@ -1,117 +1,120 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <title>OP.GG Stats Card</title>
     <style>
         body {
-            width: 300px;
-            padding: 20px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #23272f;
             color: #fff;
             margin: 0;
+            padding: 18px 16px 10px 16px;
+            min-width: 240px;
+            max-width: 320px;
         }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .title {
-            font-size: 18px;
-            font-weight: bold;
+        h1 {
+            font-size: 22px;
             color: #4FC3F7;
-            margin-bottom: 5px;
-        }
-        
-        .version {
-            font-size: 12px;
-            color: #90A4AE;
-        }
-        
-        .description {
-            font-size: 14px;
-            line-height: 1.4;
-            margin-bottom: 20px;
-            color: #B0BEC5;
-        }
-        
-        .features {
-            background: #282c34;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .features h3 {
             margin: 0 0 10px 0;
+            text-align: center;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px #222b36;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .search-box {
+            margin: 0 0 16px 0;
+            display: flex;
+            gap: 6px;
+        }
+        #searchSummonerName {
+            box-sizing: border-box;
+            height: 36px;
+            width: 100%;
+            background: #fff;
+            color: #23272f;
+            border-radius: 7px;
+            border: none;
+            padding: 0 12px;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+        #searchSummonerName:focus {
+            box-shadow: 0 0 0 2px #4FC3F7;
+        }
+        #searchBtn {
+            background: #4FC3F7;
+            color: #23272f;
+            border: none;
+            border-radius: 7px;
+            font-weight: bold;
+            font-size: 15px;
+            padding: 0 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            height: 36px;
+        }
+        #searchBtn:hover {
+            background: #FFD54F;
+            color: #23272f;
+        }
+        ul {
+            padding-left: 18px;
+            margin: 10px 0 16px 0;
+            font-size: 15px;
+        }
+        ul li {
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+        a {
             color: #4FC3F7;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        a:hover {
+            color: #FFD54F;
+        }
+        .desc {
             font-size: 14px;
-        }
-        
-        .features ul {
-            margin: 0;
-            padding-left: 20px;
             color: #B0BEC5;
-            font-size: 12px;
+            margin-bottom: 12px;
+            text-align: center;
         }
-        
-        .features li {
-            margin-bottom: 5px;
-        }
-        
         .footer {
             text-align: center;
-            font-size: 11px;
+            font-size: 12px;
             color: #90A4AE;
             border-top: 1px solid #31343b;
-            padding-top: 15px;
-        }
-        
-        .status {
-            background: #4CAF50;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 5px;
-            text-align: center;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 15px;
+            padding-top: 10px;
+            margin-top: 12px;
+            letter-spacing: 0.2px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">📊 OP.GG Stats Card</div>
-        <div class="version">v1.2.0</div>
+    <h1>📊 OP.GG Stats Card 🎉</h1>
+    <div class="desc">A fun, draggable stats card for OP.GG! Track your playtime, laning, lifetime spend, and more.</div>
+    <ul>
+        <li>🖱️ <b>Draggable</b> </li>
+        <li>⏱️ <b>Playtime</b> & laning win rate</li>
+        <li>💸 <b>Lifetime Playtime</b></li>
+        <li>🔄 <b>Auto-scroll</b> for more games</li>
+        <li>📸 <b>Share</b> (screenshot) button</li>
+        <li>🔎 <b>Long names?</b> Click to expand!</li>
+    </ul>
+    <div style="text-align:center; margin-bottom: 8px;">
+        <a href="https://op.gg/" target="_blank">Go to OP.GG</a>
     </div>
-    
-    <div class="status" id="status">
-        ✅ Active on OP.GG
-    </div>
-    
-    <div class="description">
-        Automatically displays a draggable stats card on OP.GG summoner pages with detailed game statistics and analytics.
-    </div>
-    
-    <div class="features">
-        <h3>✨ Features:</h3>
-        <ul>
-            <li>📈 Total playtime and games count</li>
-            <li>🏆 Most played champion statistics</li>
-            <li>⚔️ Laning win rate analysis</li>
-            <li>🥇 Average ranking performance</li>
-            <li>🔄 Auto-scroll to load more games</li>
-            <li>📱 Draggable and collapsible interface</li>
-            <li>💾 Settings saved across sessions</li>
-        </ul>
-    </div>
-    
     <div class="footer">
-        Created by SimronJ<br>
-        <a href="https://github.com/SimronJ/tempermonkeyScripts" style="color: #4FC3F7; text-decoration: none;">View on GitHub</a>
+        Made with ❤️ for League players<br>
+        <span style="font-size:11px;">By SimronJ</span>
     </div>
-    
-    <script src="popup.js"></script>
 </body>
 </html> 
